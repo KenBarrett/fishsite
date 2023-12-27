@@ -4,6 +4,42 @@
 	<title>Fish Calculator</title>
 	<meta charset="utf-8">
 </head>
+
+<script src='https://cdn.jsdelivr.net/npm/sql.js@1.4.0/dist/sql-wasm.js'></script>
+<script>
+  config = {
+	locateFile: filename => `https://cdn.jsdelivr.net/npm/sql.js@1.4.0/dist/sql-wasm.wasm`
+  }
+  // The `initSqlJs` function is globally provided by all of the main dist files if loaded in the browser.
+  // We must specify this locateFile function if we are loading a wasm file from anywhere other than the current html page's folder.
+  initSqlJs(config).then(function(SQL){
+	//Create the database
+
+	const xhr = new XMLHttpRequest();
+	// For example: https://github.com/lerocha/chinook-database/raw/master/ChinookDatabase/DataSources/Chinook_Sqlite.sqlite
+	xhr.open('GET', 'https://github.com/kennyBarrett/kennyBarrett.github.io/blob/main/fishstock.db', true);
+	xhr.responseType = 'arraybuffer';
+	xhr.onload = e => {
+	const uInt8Array = new Uint8Array(xhr.response);
+	const db = new SQL.Database(uInt8Array);
+	const fishinfo = db.exec("SELECT * FROM fishinfo f JOIN group g ON f.type = g.type JOIN origin o ON f.location = o.location");
+	const fishnames = db.exec("SELECT name FROM fishinfo") 
+	// contents is now [{columns:['col1','col2',...], values:[[first row], [second row], ...]}]
+	const info = fishnames[0]
+	const {columns, values} = info;
+	};
+	xhr.send();
+
+
+	
+
+  });
+</script>
+
+<template>
+<SqlDisplayTable :columns="columns" :values="values"/>
+</template>
+
 <body>
 
 	<h3>FISH!!!!</h3>
