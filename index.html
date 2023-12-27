@@ -17,7 +17,7 @@
 
 	const xhr = new XMLHttpRequest();
 	// For example: https://github.com/lerocha/chinook-database/raw/master/ChinookDatabase/DataSources/Chinook_Sqlite.sqlite
-	xhr.open('GET', 'https://github.com/KenBarrett/fishsite/blob/New-Features/fishstock.db', true);
+	xhr.open('GET', 'https://kenbarrett.github.io/fishsite/fishstock.db', true);
 	xhr.responseType = 'arraybuffer';
 	xhr.onload = e => {
 	const uInt8Array = new Uint8Array(xhr.response);
