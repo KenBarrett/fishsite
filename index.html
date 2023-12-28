@@ -22,7 +22,7 @@
 	xhr.onload = e => {
 	const uInt8Array = new Uint8Array(xhr.response);
 	const db = new SQL.Database(uInt8Array);
-	const fishinfo = db.exec("SELECT * FROM fishinfo f JOIN group g ON f.type = g.type JOIN origin o ON f.location = o.location");
+	const fishinfo = db.exec("SELECT * FROM fishinfo LEFT JOIN subset ON fishinfo.type = subset.type LEFT JOIN origin ON fishinfo.location = origin.location");
 	const fishnames = db.exec("SELECT name FROM fishinfo") 
 	// contents is now [{columns:['col1','col2',...], values:[[first row], [second row], ...]}]
 	const info = fishnames[0]
