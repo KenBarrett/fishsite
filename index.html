@@ -3,6 +3,7 @@
 <head>
 	<title>Fish Calculator</title>
 	<meta charset="utf-8">
+	<link rel = "stylesheet" href="style.css">
 </head>
 
 <script src='https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.9.0/sql-wasm.js'></script>
@@ -12,6 +13,12 @@
   }
   // The `initSqlJs` function is globally provided by all of the main dist files if loaded in the browser.
   // We must specify this locateFile function if we are loading a wasm file from anywhere other than the current html page's folder.
+  var db;
+  var fishnames;
+  var fishinfo;
+  var fisharray = [];
+  var tankSize;
+  var isinfo = false;
   initSqlJs(config).then(function(SQL){
 	//Create the database
 
@@ -21,26 +28,495 @@
 	xhr.responseType = 'arraybuffer';
 	xhr.onload = e => {
 	const uInt8Array = new Uint8Array(xhr.response);
-	const db = new SQL.Database(uInt8Array);
-	const fishinfo = db.exec("SELECT * FROM fishinfo LEFT JOIN subset ON fishinfo.type = subset.type LEFT JOIN origin ON fishinfo.location = origin.location");
-	const fishnames = db.exec("SELECT name FROM fishinfo") 
+	db = new SQL.Database(uInt8Array);
+	fishinfo = db.exec("SELECT * FROM fishinfo LEFT JOIN subset ON fishinfo.type = subset.type LEFT JOIN origin ON fishinfo.location = origin.location");
+	fishnames = db.exec("SELECT fish_id, name FROM fishinfo") 
 	// contents is now [{columns:['col1','col2',...], values:[[first row], [second row], ...]}]
 	const info = fishnames[0]
 	const {columns, values} = info;
-	};
+	var html = '<a href="#" onclick="clickFunc(' + values[0][0] + ')">' + values[0][1] + '</a>\n'; 
+	for (let i = 1; i <values.length ; i++)
+	{ 
+		html += '<a href="#" onclick="clickFunc(' + values[i][0] + ')">' + values[i][1] + '</a>\n'; 
+	}
+	document.getElementById("menu").innerHTML = html;
+
+	}
+
 	xhr.send();
-
   });
-</script>
 
-<template>
-<SqlDisplayTable :columns="columns" :values="values"/>
-</template>
+  function clickFunc(fishint){
+		const info = fishinfo[0];
+		const{columns, values} = info;
+		var fishidx;
+		var notcontains = true;
+		for(let i = 0; i< values.length; i++)
+		{
+			if(fishint == values[i][0])
+			{
+				fishidx = i;
+				break;
+			}
+		}
+		//console.log(fishinfo[0].values[fishidx]); //long term may be issue
+		for(let b = 0; b < fisharray.length; b++)
+		{
+
+			if(fisharray[b].fish_id == fishidx + 1)
+			{
+				notcontains = false;
+				fisharray[b].count++;
+				break;
+			}
+		}
+		if(notcontains)
+		{
+		var fishstock = {
+			fish_id:  values[fishidx][0], name:	   values[fishidx][1], 
+			space:	  values[fishidx][4], diet:	   values[fishidx][5], 
+			min_tank: values[fishidx][6], aggression: values[fishidx][8], 
+			behavior: values[fishidx][9], count: 1,
+			min_temp: values[fishidx][11], max_temp:   values[fishidx][12], 
+			min_PH:	  values[fishidx][13], max_PH: 	   values[fishidx][14]
+		};
+		fisharray.push(fishstock);
+	}
+		//console.log(fisharray);
+		var element;
+		for(let i = 0; i < fisharray.length; i++)
+		{
+			element = document.getElementById(fisharray[i].fish_id);
+			if((element != null) && (notcontains))
+			{
+				fisharray[i].count = document.getElementById(fisharray[i].fish_id).value;
+			}
+		}
+		displaytable();
+		//displaytable();
+
+  	}
+
+  function displaytable(){
+	//var example = 	'<label>username: </label> \n <input id = "myText"><br><br>\n<button id = "mySubmit">submit</button>'
+	var html = '<table>\n<th>Fishname</th>\n<th>Fishcount</th>\n';
+	for(let i = 0; i < fisharray.length; i++)
+	{
+		html += '<tr>\n';
+		html += '<td>' + fisharray[i].name + '</td>\n';
+		html += '<td>' + '<input type = "number" input id =' + fisharray[i].fish_id + ' value =' + fisharray[i].count + '>\n</td>\n';  
+		html += '</tr>\n';
+	}
+	html+='<button onclick = "fishSubmit()">Submit</button>' 
+	html+='\n</table>';
+	//console.log(html);
+	document.getElementById("table").innerHTML = html;
+	
+  }
+
+  function filterFunction() {
+  var input, filter, ul, li, a, i;
+  input = document.getElementById("myInput");
+  filter = input.value.toUpperCase();
+  div = document.getElementById("menu");
+  a = div.getElementsByTagName("a");
+  for (let i = 0; i < a.length; i++) {
+    txtValue = a[i].textContent || a[i].innerText;
+    if (txtValue.toUpperCase().indexOf(filter) > -1) {
+      a[i].style.display = "";
+    } else {
+      a[i].style.display = "none";
+    }
+  }
+  }
+
+
+  	function fishSubmit(){
+		isinfo = true;
+		//console.log("submitted");
+		for(let i = 0; i < fisharray.length; i++)
+		{
+			if(document.getElementById(fisharray[i].fish_id).value == 0)
+			{
+				console.log(fisharray[i].name+ "is zero");
+				const firsthalf = fisharray.slice(0,i);
+				const secondhalf = fisharray.slice(i+1);
+				fisharray = firsthalf.concat(secondhalf);
+				i--;
+			}
+			else
+			{
+				fisharray[i].count = parseInt(document.getElementById(fisharray[i].fish_id).value,10);  
+			}
+
+		}
+		displaytable(); // maybe a little risky
+		if(fisharray.length == 0)
+		{
+			displayinfo(0);
+		}
+		else
+		{
+			displayinfo(1);
+		}
+	}
+
+	function displayinfo(display) //function to display table
+	{
+		var html = '<table>';
+		if(display)
+		{
+			html += phInfo();
+			html += tmpInfo();
+			html += stocking();
+			html += comp();
+			html += type();
+		}
+		html += '</table>';
+		console.log(html);
+		document.getElementById("info").innerHTML = html;
+	}
+
+	function stocking()
+	{
+		var stock = '\n<tr>\n<th>Stocking</th>\n<td>';
+		var volume = 0;
+		var stockLevel;
+		for(let i = 0; i < fisharray.length; i++)
+		{
+			volume += (fisharray[i].space * fisharray[i].count);
+		}
+		//console.log(fisharray[0].count * fisharray[0].space);
+		//console.log(tankSize);
+		if(tankSize)
+		{
+			stock += '\n<ul>';
+			stockLevel = ((volume/tankSize)*100);
+			stock += '<li>Your aquarium is at ' + Math.round(stockLevel) + '% capacity</li>';
+			if(stockLevel > 120)
+			{
+				stock += '<li> your  aquarium is overstocked</li>';
+			}
+			for(let a = 0; a < fisharray.length; a++)
+			{
+				if(fisharray[a].min_tank > tankSize)
+				{
+					stock += '<li>it is recommended for ' + fisharray[a].name + ' to have a tank size of at least ' + fisharray[a].min_tank + ' gallons.</li>'
+				}
+			}
+			stock += '<ul>\n'
+		}
+		else
+		{
+			stock +='Please Enter Your Tank Size in Gallons to determine capacity.'
+		}
+		return stock += '</td>\n</tr>\n';
+	}
+
+	function tmpInfo() //function to display the temp info
+	{
+		var temp = '\n<tr>\n<th>Temp</th>\n<td>';
+		var tempHigh = fisharray[0].max_temp;
+		var tempLow = fisharray[0].min_temp;
+		for(let i = 0; i < fisharray.length - 1; i++)
+		{
+			if(fisharray[i].max_temp > fisharray[i+1].max_temp)
+			{
+				tempHigh =  fisharray[i+1].max_temp;
+			} 
+		}
+		for(let a = 0; a < fisharray.length - 1; a++)
+		{
+			if(fisharray[a].min_temp < fisharray[a+1].min_temp)
+			{
+				tempLow =  fisharray[a+1].min_temp;
+			} 
+		}
+		if(tempLow > tempHigh)
+		{
+			temp +='Your fish have incompatable temperature requirements<br>'; //maybe issue?
+			for(let b = 0; b < fisharray.length; b++)
+			{
+				temp += fisharray[b].name + ': ' + fisharray[b].min_temp + '-' + fisharray[b].max_temp + '<br>';
+			}
+		}
+		else
+		{
+			temp += 'Your recommended temperature: ' + tempLow + '-' + tempHigh + '\n';
+		}
+		return temp += '</td>\n</tr>\n';
+	}
+
+	function phInfo() //function to display the ph info
+	{
+		var ph = '\n<tr>\n<th>PH</th>\n<td>';
+		var phHigh = fisharray[0].max_PH;
+		var phLow = fisharray[0].min_PH;
+		for(let i = 0; i < fisharray.length - 1; i++)
+		{
+			if(fisharray[i].max_PH > fisharray[i+1].max_PH)
+			{
+				phHigh =  fisharray[i+1].max_PH;
+			} 
+		}
+		for(let a = 0; a < fisharray.length - 1; a++)
+		{
+			if(fisharray[a].min_PH < fisharray[a+1].min_PH)
+			{
+				phLow =  fisharray[a+1].min_PH;
+			} 
+		}
+		if(phLow > phHigh)
+		{
+			ph +='Your fish have incompatable PH requirements<br>'; //maybe issue?
+			for(let b = 0; b < fisharray.length; b++)
+			{
+				ph += fisharray[b].name + ': ' + fisharray[b].min_PH + '-' + fisharray[b].max_PH + '<br>';
+			}
+		}
+		else
+		{
+			ph += 'Your recommended PH: ' + phLow + '-' + phHigh + '\n';
+		}
+		return ph += '</td>\n</tr>\n';
+	}
+
+	function comp(){
+		argone = [];
+		argtwo = [];
+		argthree = [];
+		noissue = true;
+		var compatable = '\n<tr>\n<th>Compatibility</th>\n<td>';
+		for(let i = 0; i < fisharray.length; i++)
+		{
+			if(fisharray[i].aggression == 1)
+			{
+				argone.push(fisharray[i].name);
+			}
+			if(fisharray[i].aggression == 2)
+			{
+				argtwo.push(fisharray[i].name);
+			}
+			if(fisharray[i].aggression == 3)
+			{
+				argthree.push(fisharray[i].name);
+			}
+		}
+		if(argone.length != 0 && argtwo.length != 0)
+		{
+			noissue = false;
+			compatable += '<ul>\n<li>';
+			for(let a = 0; a < argone.length; a++)
+			{
+				compatable+= argone[a];
+				if (a != argone.length - 1)
+				{
+					compatable += ', ';
+				}
+			}
+			compatable += ' are peaceful, may not be compatable with ';
+			for(let b = 0; b < argtwo.length; b++)
+			{
+				compatable+= argtwo[b];
+				if(b != argtwo.length - 1)
+				{
+					compatable += ', ';
+				}	
+			}
+			compatable += ' who are semi-agressive</li>\n';
+		}
+		if(argtwo.length != 0 && argthree.length != 0)
+		{
+			noissue = false;
+			compatable += '<li>';
+			for(let c = 0; c < argtwo.length; c++)
+			{
+				compatable+= argtwo[c];
+				if (c != argtwo.length - 1)
+				{
+					compatable += ', ';
+				}
+			}
+			compatable += ' are semi-agressive, may not be compatable with ';
+			for(let d = 0; d < argthree.length; d++)
+			{
+				compatable+= argthree[d];
+				if (d != argthree.length - 1)
+				{
+					compatable += ', ';
+				}
+				compatable += ' who are aggressive </li>\n';
+			}
+
+		}
+		if(argone.length != 0 && argthree.length != 0)
+		{
+			noissue = false;
+			compatable += '<li>';
+			for(let e = 0; e < argone.length; e++)
+			{
+				compatable+= argone[e];
+				if (e != argone.length - 1)
+				{
+					compatable += ', ';
+				}
+				compatable += ' are peaceful and are not compatable with ';
+			}
+			for(let f = 0; f < argthree.length; f++)
+			{
+				compatable+= argthree[f];
+				if (f != argthree.length - 1)
+				{
+					compatable += ', ';
+				}
+				compatable += ' who are aggressive </li>\n';	
+			}
+		}
+
+		for(let g = 0; g < fisharray.length; g++)
+		{
+			for(let h = 0; h < fisharray.length; h++)
+			{
+				if(fisharray[g].aggression == 3 && ((fisharray[g].space)/(fisharray[h].space))>5)
+				{
+					noissue = false;
+					compatable += '<li>' + fisharray[g].name + ' is too large to be kept with ' + fisharray[h].name + '</li>\n'; 
+				}
+				if(fisharray[g].aggression == 2 && ((fisharray[g].space)/(fisharray[h].space))>8)
+				{
+					noissue = false;
+					compatable += '<li>' + fisharray[g].name + ' is too large to be kept with ' + fisharray[h].name + '</li>\n'; 
+				}
+				if(fisharray[g].aggression == 1 && ((fisharray[g].space)/(fisharray[h].space))>10)
+				{
+					noissue = false;
+					compatable += '<li>' + fisharray[g].name + ' is too large to be kept with ' + fisharray[h].name + '</li>\n'; 
+				}
+			}
+		}
+
+		if(noissue)
+		{
+			compatable += 'There are no aggression issues in your stocking';
+		}
+		else
+		{
+			compatable += '</ul>'
+		}
+		return compatable += '\n</td>\n</tr>\n';
+	}
+
+	/*	
+	function eatable(){
+		var eat;
+		for(let i = 0; i < fisharray.length; i++)
+		{
+			for(let b = 0; b < fisharray.length; b++)
+			{
+				if(fisharray[i].behavior == 3 && ((fisharray[i].space)/(fisharray[b].space))>5)
+				{
+					eat += fisharray[i].name + ' is too large to be kept with ' + fisharray[b].name + '<br>'; 
+				}
+				if(fisharray[i].behavior == 2 && ((fisharray[i].space)/(fisharray[b].space))>8)
+				{
+					eat += fisharray[i].name + ' is too large to be kept with ' + fisharray[b].name + '<br>'; 
+				}
+				if(fisharray[i].behavior == 1 && ((fisharray[i].space)/(fisharray[b].space))>10)
+				{
+					eat += fisharray[i].name + ' is too large to be kept with ' + fisharray[b].name + '<br>'; 
+				}
+			}
+		}
+	}
+	*/
+
+	function type(){
+		behavior = '\n<tr>\n<th>Special Requirements</th>\n<td>';	
+		none = true;
+		for(let i = 0; i < fisharray.length; i++)
+		{
+			if((fisharray[i].count < 5) && (fisharray[i].behavior == 2))
+			{
+				if(none)
+				{
+					behavior += '\n<ul>'
+				}
+				none = false;
+				behavior += '<li>' + fisharray[i].name + ' is a schooling fish, it is recommended for you to have a least 5</li>\n';
+			}
+			if((fisharray[i].count < 5) && (fisharray[i].behavior == 6))
+			{
+				if(none)
+				{
+					behavior += '\n<ul>'
+				}
+				none = false;
+				behavior += '<li>' + fisharray[i].name + ' is an rift lake african cichlid, it may be recommended for you to overstock your tank or maintain specific gender ratio</li>\n';
+			}
+			if((fisharray[i].behavior == 4 && fisharray[i].count > 1 )|| (fisharray[i].behavior == 5 && fisharray[i].count > 1))
+			{
+				if(none)
+				{
+					behavior += '\n<ul>'
+				}
+				none = false;
+				behavior += '<li>' + fisharray[i].name + ' is a solatary fish, there may be aggression issues with multiple of this fish</li>\n';
+			}
+		}
+		if(none)
+		{
+			behavior += ' No special requirements'
+		}
+		else
+		{
+			behavior += '</ul>'
+		}
+		return behavior += '\n</td>\n</tr>\n';	
+	}
+
+
+	window.onload = function(){
+		document.getElementById("sizeSubmit").onclick = function(){
+		tankSize = parseInt(document.getElementById("tankSize").value, 10);
+		if(isinfo)
+		{
+			fishSubmit();
+		}
+		//console.log(tankSize);
+		}
+	}
+
+
+
+</script>
 
 <body>
 
-	<h3>FISH!!!!</h3>
-	<h3>MoreFish!!</h3>
+	<label>Tank Size(Gallons): </label>
+	<input id = "tankSize" placeholder = 0 ><br><br>
+	<button id= "sizeSubmit">submit</button>
+	<div id = "content">
+	<div id = "left-banner">
+		<div class = "flex-element">
+			<input type="text" placeholder="Search.." id="myInput" onkeyup="filterFunction()">
+		</div>
+		<div class = "flex-element">
+			<div id = "menu">	
+			</div>
+		</div>
+	</div>
+	
+	<div id = "middle-banner">
+		<div class = "flex-element">	
+			<div id = "table">
+			</div>
+		</div>
+		<div class = "flex-element">	
+			<div id = "info">
+			</div>
+		</div>
+
+	</div>	
 </body>
 </html>
 

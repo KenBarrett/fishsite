@@ -1,0 +1,97 @@
+/* The search field */
+#myInput {
+    width: 180px;
+    background-image: url('searchicon.png');
+    background-position: 14px 12px;
+    background-repeat: no-repeat;
+    font-size: 16px;
+    padding: 14px 20px 12px 45px;
+    border: none;
+    border-bottom: 1px solid #ddd;
+}
+
+/* The search field when it gets focus/clicked on */
+#myInput:focus {outline: 3px solid #ddd;}
+
+
+#left-banner {
+    display: flex;
+    flex-direction: column;
+    width: 500px;
+    height: 500px;
+}
+
+/* The container <div> - needed to position the dropdown content */
+#menu {
+    position: relative;
+    display: inline-block;
+    position: absolute;
+    background-color: #f6f6f6;
+    min-width: 250px;
+    border: 1px solid #ddd;
+    z-index: 1;
+    height: 400px;
+    overflow-y: auto;
+}
+
+/* Links inside the dropdown */
+#menu a {
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+}
+
+/* Change color of dropdown links on hover */
+#menu a:hover {background-color: #f1f1f1}
+
+#content {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    height:100%;
+}
+
+#table {
+    display: inline-block;
+    background-color: #f6f6f6;
+    min-width: 250px;
+    border: 1px solid #ddd;
+    z-index: 1;
+    height: 250px;
+    overflow-y: auto;
+}
+
+#table td{
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+}
+
+#table th{
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none; 
+}
+
+#info{
+    border: 1px solid white;
+    border-collapse: collapse;
+}
+
+#info td{
+    background-color: #96D4D4;
+}
+
+#info th{
+    background-color: #96D4D4;
+}
+
+
+#middle-banner {
+    display: flex;
+    flex-direction: column;
+    width: 500px;
+    height: 500px;
+}
+
