@@ -406,30 +406,6 @@
 		return compatable += '\n</td>\n</tr>\n';
 	}
 
-	/*	
-	function eatable(){
-		var eat;
-		for(let i = 0; i < fisharray.length; i++)
-		{
-			for(let b = 0; b < fisharray.length; b++)
-			{
-				if(fisharray[i].behavior == 3 && ((fisharray[i].space)/(fisharray[b].space))>5)
-				{
-					eat += fisharray[i].name + ' is too large to be kept with ' + fisharray[b].name + '<br>'; 
-				}
-				if(fisharray[i].behavior == 2 && ((fisharray[i].space)/(fisharray[b].space))>8)
-				{
-					eat += fisharray[i].name + ' is too large to be kept with ' + fisharray[b].name + '<br>'; 
-				}
-				if(fisharray[i].behavior == 1 && ((fisharray[i].space)/(fisharray[b].space))>10)
-				{
-					eat += fisharray[i].name + ' is too large to be kept with ' + fisharray[b].name + '<br>'; 
-				}
-			}
-		}
-	}
-	*/
-
 	function type(){
 		behavior = '\n<tr>\n<th>Special Requirements</th>\n<td>';	
 		none = true;
@@ -484,6 +460,14 @@
 		}
 		//console.log(tankSize);
 		}
+
+		document.getElementById("Clear").onclick = function(){
+			var isclear = confirm("Are you sure you want to clear?");
+			if(isclear)
+			{
+				window.location.reload();
+			}
+		}
 	}
 
 
@@ -493,8 +477,10 @@
 <body>
 
 	<label>Tank Size(Gallons): </label>
-	<input id = "tankSize" placeholder = 0 ><br><br>
-	<button id= "sizeSubmit">submit</button>
+	<input id = "tankSize" placeholder = 0 >
+	<button id= "sizeSubmit">submit</button><br><br>
+	<label> Clear Stocking: </label>
+	<button id = "Clear">clear</button>
 	<div id = "content">
 	<div id = "left-banner">
 		<div class = "flex-element">
